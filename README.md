@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# THRIFT NATION — Curated Luxury Thrift Fashion E-Commerce
 
-## Getting Started
+**Tagline:** Pre-loved. Reimagined. Yours.
 
-First, run the development server:
+Built with Next.js App Router (Next.js 16), TypeScript, Tailwind CSS v4, Framer Motion, Prisma ORM, PostgreSQL (Neon), Auth.js v5, Cloudinary, and Razorpay.
+
+## 1. Environment Variables
+
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+- `DATABASE_URL` — Neon PostgreSQL connection string (`?sslmode=require`)
+- `AUTH_SECRET` — Random 32-byte base64 secret (`openssl rand -base64 32`)
+- `AUTH_URL` / `NEXT_PUBLIC_SITE_URL` — Canonical site URL (e.g. `http://localhost:3000` or production domain)
+- `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `NEXT_PUBLIC_RAZORPAY_KEY_ID` — Razorpay API keys
+- `RAZORPAY_WEBHOOK_SECRET` — Razorpay webhook signing secret (configured for `/api/webhooks/razorpay`)
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — Optional managed image uploads in `/admin/products`
+
+## 2. Database Setup & Seeding
+
+```bash
+npm install
+npx prisma generate
+npx prisma migrate dev --name init
+npm run db:seed
+```
+
+Seeded demo accounts (`prisma/seed.ts`):
+- **Super Admin:** `admin@thriftnation.in` / `Admin@1234`
+- **Customer:** `arjun@thriftnation.in` / `Customer@1234`
+- **Sample Coupons:** `NATION10` (10% off above ₹2,999), `FIRST500` (₹500 off above ₹4,500)
+
+> Note: Change default passwords immediately before production deployment.
+
+## 3. Running Locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 4. Production Deployment (Vercel + Neon)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Provision a PostgreSQL database on **Neon** and copy the pooled connection string into Vercel `DATABASE_URL`.
+2. Add all environment variables from `.env.example` in Vercel Project Settings.
+3. Run production migrations against Neon:
+   ```bash
+   npx prisma migrate deploy
+   npm run db:seed
+   ```
+4. Configure a Razorpay webhook pointing to `https://<your-domain>/api/webhooks/razorpay` for `payment.captured`, `order.paid`, and `payment.failed` events.
+5. Deploy to Vercel (`vercel --prod` or Git push).
