@@ -1,5 +1,13 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+
+if (!process.env.DATABASE_URL) {
+  try {
+    process.loadEnvFile(".env.local");
+  } catch {
+    // .env.local optional when DATABASE_URL is already provided
+  }
+}
 import {
   DEFAULT_EDITORIAL_ARTICLES,
   DEFAULT_SITE_SETTINGS,

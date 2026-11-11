@@ -3,8 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import type { SealedLiveQuery } from "@neon/realtime/client";
 import { Check, Heart, Ruler, ShieldCheck, ShoppingBag } from "lucide-react";
 import { useStore } from "@/components/providers/StoreProvider";
+import { LiveStockObserver } from "@/components/product/LiveStockObserver";
+import type { LiveProductStockRow } from "@/lib/realtime";
 import {
   CONDITION_DESCRIPTIONS,
   CONDITION_LABELS,
@@ -16,11 +19,17 @@ import type { ProductDetailItem } from "@/types/catalog";
 
 interface ProductDetailClientProps {
   product: ProductDetailItem;
+  sealedStockQuery?: SealedLiveQuery<LiveProductStockRow> | null;
 }
 
-export function ProductDetailClient({ product }: ProductDetailClientProps) {
+export function ProductDetailClient({
+  product,
+  sealedStockQuery = null,
+}: ProductDetailClientProps) {
   const { addToCart, isInWishlist, toggleWishlist } = useStore();
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [liveStock, setLiveStock] = useState(product.stockQuantity);
+  const [liveStatus, setLiveStatus] = useState<string>("");
 
   const images =
     product.images.length > 0
@@ -28,7 +37,8 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
       : [{ id: "default", url: "/images/prod-trench.jpg", alt: product.name, sortOrder: 0 }];
   const activeImage = images[selectedIdx] ?? images[0];
   const wishlisted = isInWishlist(product.id);
-  const isSoldOut = product.stockQuantity <= 0;
+  const isSoldOut = liveStock <= 0;
+  const liveProduct = { ...product, stockQuantity: liveStock };
 
   const measurementEntries = [
     { label: "Chest", value: product.measurements.chest },
@@ -42,6 +52,13 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
   return (
     <>
+      <LiveStockObserver
+        productId={product.id}
+        initialStock={product.stockQuantity}
+        sealedQuery={sealedStockQuery}
+        onStockChange={setLiveStock}
+        onStatusChange={setLiveStatus}
+      />
       <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-8 lg:px-12 lg:py-14">
         {/* Breadcrumb */}
         <nav
@@ -177,14 +194,14 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               </div>
               <div>
                 <span className="block text-[10px] tracking-[0.16em] uppercase text-charcoal/55">
-                  Availability
+                  Availability {liveStatus === "live" ? "· Live" : ""}
                 </span>
                 <span className="mt-1 block font-medium text-olive">
                   {isSoldOut
                     ? "Sold Out"
-                    : product.stockQuantity === 1
+                    : liveStock === 1
                       ? "1 of 1 Available"
-                      : `${product.stockQuantity} Available`}
+                      : `${liveStock} Available`}
                 </span>
               </div>
               <div>
@@ -210,7 +227,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               <button
                 type="button"
                 disabled={isSoldOut}
-                onClick={() => addToCart(product, 1)}
+                onClick={() => addToCart(liveProduct, 1)}
                 className="flex flex-1 items-center justify-center gap-2.5 bg-charcoal px-6 py-4 text-xs font-medium tracking-[0.18em] uppercase text-ivory transition-colors hover:bg-charcoal/90 disabled:cursor-not-allowed disabled:bg-charcoal/35"
               >
                 <ShoppingBag className="h-4 w-4" />
@@ -303,7 +320,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           <button
             type="button"
             disabled={isSoldOut}
-            onClick={() => addToCart(product, 1)}
+            onClick={() => addToCart(liveProduct, 1)}
             className="shrink-0 bg-charcoal px-5 py-2.5 text-[11px] font-medium tracking-[0.16em] uppercase text-ivory disabled:bg-charcoal/40"
           >
             {isSoldOut ? "Sold Out" : "Add to Bag"}

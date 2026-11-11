@@ -278,6 +278,13 @@ export async function getProductBySlug(
 }
 
 export async function getCollections(): Promise<CollectionSummary[]> {
+  "use cache";
+  try {
+    cacheLife("minutes");
+    cacheTag("collections");
+  } catch {
+    // Outside Next.js runtime (e.g. unit tests)
+  }
   if (!isDatabaseConfigured) {
     return SEED_COLLECTIONS;
   }
@@ -336,8 +343,12 @@ export async function getFilterFacets(): Promise<{
 
 export async function getSiteSettings(): Promise<SiteSettingsData> {
   "use cache";
-  cacheLife("minutes");
-  cacheTag("site-settings");
+  try {
+    cacheLife("minutes");
+    cacheTag("site-settings");
+  } catch {
+    // Outside Next.js runtime (e.g. unit tests)
+  }
   if (!isDatabaseConfigured) {
     return DEFAULT_SITE_SETTINGS;
   }

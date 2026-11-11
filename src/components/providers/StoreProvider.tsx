@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { MotionConfig } from "framer-motion";
 import { SessionProvider, useSession } from "next-auth/react";
+import { RealtimeRoot } from "@/components/providers/RealtimeRoot";
 import type { ProductCardItem } from "@/types/catalog";
 
 export interface CartItem {
@@ -325,7 +326,9 @@ function StoreProviderInner({ children }: { children: React.ReactNode }) {
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <StoreProviderInner>{children}</StoreProviderInner>
+      <RealtimeRoot>
+        <StoreProviderInner>{children}</StoreProviderInner>
+      </RealtimeRoot>
     </SessionProvider>
   );
 }

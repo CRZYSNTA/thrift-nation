@@ -150,3 +150,4 @@ test("Catalog queries filter by gender, collection, price, search, and sort corr
   const collections = await getCollections();
   assert.equal(collections.length, 5);
 });
+

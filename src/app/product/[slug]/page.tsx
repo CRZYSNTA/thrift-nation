@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { getProductBySlug, getProducts } from "@/lib/catalog";
+import { trySealProductStockQuery } from "@/lib/realtime";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { ProductCard } from "@/components/product/ProductCard";
 import {
@@ -37,6 +39,7 @@ async function ProductPageContent({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  await connection();
   const { slug } = await params;
   const product = await getProductBySlug(slug);
 
@@ -44,7 +47,7 @@ async function ProductPageContent({
     notFound();
   }
 
-  const [relatedAll, reviewRows] = await Promise.all([
+  const [relatedAll, reviewRows, sealedStockQuery] = await Promise.all([
     getProducts({
       gender: product.gender,
       limit: 5,
@@ -58,6 +61,7 @@ async function ProductPageContent({
           })
           .catch(() => [])
       : Promise.resolve([]),
+    trySealProductStockQuery(product.id),
   ]);
   const related = relatedAll.filter((p) => p.id !== product.id).slice(0, 4);
   const initialReviews: ReviewItem[] = reviewRows.map((r) => ({
@@ -99,7 +103,10 @@ async function ProductPageContent({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ProductDetailClient product={product} />
+      <ProductDetailClient
+        product={product}
+        sealedStockQuery={sealedStockQuery}
+      />
 
       <ProductReviewsSection
         productId={product.id}

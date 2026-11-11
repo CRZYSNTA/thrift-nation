@@ -91,6 +91,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     revalidateTag("site-settings", "max");
+    revalidateTag("collections", "max");
     revalidatePath("/", "layout");
 
     return NextResponse.json({ settings });

@@ -1,9 +1,13 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
+import {
+  trySealAdminOrdersQuery,
+  type LiveAdminOrderRow,
+} from "@/lib/realtime";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { LiveAdminOrdersFeed } from "@/components/admin/LiveAdminOrdersFeed";
 import { formatINR } from "@/lib/utils";
 
 async function AdminOverviewContent() {
@@ -39,6 +43,7 @@ async function AdminOverviewContent() {
     activeProducts,
     outOfStockProducts,
     recentOrders,
+    sealedOrdersQuery,
   ] = await Promise.all([
     prisma.order.aggregate({
       where: {
@@ -58,9 +63,19 @@ async function AdminOverviewContent() {
     prisma.product.count({ where: { stockQuantity: { lte: 0 } } }),
     prisma.order.findMany({
       orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { items: true },
+      take: 10,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        paymentMethod: true,
+        paymentStatus: true,
+        total: true,
+        customerName: true,
+        createdAt: true,
+      },
     }),
+    trySealAdminOrdersQuery(),
   ]);
 
   const metrics = [
@@ -74,6 +89,17 @@ async function AdminOverviewContent() {
     { label: "Active Archive Pieces", value: String(activeProducts) },
     { label: "Out of Stock / Claimed", value: String(outOfStockProducts) },
   ];
+
+  const initialOrders: LiveAdminOrderRow[] = recentOrders.map((o) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    status: o.status,
+    paymentMethod: o.paymentMethod,
+    paymentStatus: o.paymentStatus,
+    total: o.total,
+    customerName: o.customerName,
+    createdAt: o.createdAt.toISOString(),
+  }));
 
   return (
     <AdminShell
@@ -93,60 +119,10 @@ async function AdminOverviewContent() {
         ))}
       </div>
 
-      <div className="mt-8 border border-charcoal/12 bg-white p-6">
-        <div className="flex items-center justify-between pb-4 border-b border-charcoal/10">
-          <h2 className="text-xs font-medium tracking-[0.18em] uppercase text-charcoal">
-            Recent Orders
-          </h2>
-          <Link
-            href="/admin/orders"
-            className="text-[11px] uppercase tracking-[0.14em] text-olive hover:underline"
-          >
-            Manage All Orders
-          </Link>
-        </div>
-
-        {recentOrders.length === 0 ? (
-          <p className="py-8 text-sm text-charcoal/60">No orders recorded yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-charcoal/10 text-[10px] tracking-[0.14em] uppercase text-charcoal/55">
-                  <th className="py-3 pr-4">Order</th>
-                  <th className="py-3 pr-4">Customer</th>
-                  <th className="py-3 pr-4">Payment</th>
-                  <th className="py-3 pr-4">Status</th>
-                  <th className="py-3 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-charcoal/10">
-                {recentOrders.map((o) => (
-                  <tr key={o.id}>
-                    <td className="py-3.5 pr-4 font-medium text-charcoal">
-                      {o.orderNumber}
-                    </td>
-                    <td className="py-3.5 pr-4 text-charcoal/75">
-                      {o.customerName}
-                    </td>
-                    <td className="py-3.5 pr-4 text-charcoal/70">
-                      {o.paymentMethod} · {o.paymentStatus}
-                    </td>
-                    <td className="py-3.5 pr-4">
-                      <span className="border border-charcoal/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em]">
-                        {o.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 text-right font-medium tabular-nums">
-                      {formatINR(o.total)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <LiveAdminOrdersFeed
+        initialOrders={initialOrders}
+        sealedQuery={sealedOrdersQuery}
+      />
     </AdminShell>
   );
 }
@@ -164,4 +140,3 @@ export default function AdminDashboardPage() {
     </Suspense>
   );
 }
-
