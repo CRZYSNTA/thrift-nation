@@ -78,7 +78,7 @@ async function CatalogContent({
       search: sp.search,
       sort,
     }),
-    getFilterFacets(),
+    getFilterFacets(fixedGender),
   ]);
 
   return (

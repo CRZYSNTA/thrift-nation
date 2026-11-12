@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { SealedLiveQuery } from "@neon/realtime/client";
-import { Check, Heart, Ruler, ShieldCheck, ShoppingBag } from "lucide-react";
+import { Check, Heart, Ruler, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
 import { useStore } from "@/components/providers/StoreProvider";
 import { LiveStockObserver } from "@/components/product/LiveStockObserver";
 import type { LiveProductStockRow } from "@/lib/realtime";
@@ -28,6 +28,7 @@ export function ProductDetailClient({
 }: ProductDetailClientProps) {
   const { addToCart, isInWishlist, toggleWishlist } = useStore();
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [selectedSize, setSelectedSize] = useState(product.size);
   const [liveStock, setLiveStock] = useState(product.stockQuantity);
   const [liveStatus, setLiveStatus] = useState<string>("");
 
@@ -222,6 +223,32 @@ export function ProductDetailClient({
               </div>
             </div>
 
+            {/* Size Selection */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-medium tracking-[0.16em] uppercase text-charcoal/70">
+                  Select Size
+                </span>
+                <span className="text-charcoal/55">
+                  1 of 1 Archive Fit · Verified Flat-Lay Below
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSize(product.size)}
+                  className={cn(
+                    "min-w-[76px] border px-4 py-2.5 text-xs font-medium tracking-[0.12em] uppercase transition-colors",
+                    selectedSize === product.size
+                      ? "border-charcoal bg-charcoal text-ivory"
+                      : "border-charcoal/25 bg-white text-charcoal"
+                  )}
+                >
+                  {product.size}
+                </button>
+              </div>
+            </div>
+
             {/* Actions */}
             <div className="flex gap-3">
               <button
@@ -301,6 +328,25 @@ export function ProductDetailClient({
                   {product.measurements.notes}
                 </p>
               )}
+            </div>
+
+            {/* Shipping & Returns */}
+            <div className="border border-charcoal/12 bg-white p-5 space-y-2.5">
+              <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.16em] uppercase text-charcoal">
+                <Truck className="h-4 w-4 text-olive" />
+                Shipping &amp; Archive Returns
+              </div>
+              <ul className="space-y-1.5 text-xs leading-relaxed text-charcoal/75">
+                <li>
+                  • Dispatched within 24–48 hours in breathable cotton dust bags.
+                </li>
+                <li>
+                  • Complimentary express shipping across India above ₹2,999.
+                </li>
+                <li>
+                  • 7-day hassle-free returns with intact archival security tag.
+                </li>
+              </ul>
             </div>
           </div>
         </div>

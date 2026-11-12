@@ -329,13 +329,47 @@ export async function getCategories(): Promise<CategorySummary[]> {
   }
 }
 
-export async function getFilterFacets(): Promise<{
+const MEN_CATEGORY_SLUGS = [
+  "shirts",
+  "t-shirts",
+  "trousers",
+  "denim",
+  "outerwear",
+  "jackets",
+];
+
+const WOMEN_CATEGORY_SLUGS = [
+  "tops",
+  "dresses",
+  "trousers",
+  "skirts",
+  "denim",
+  "outerwear",
+];
+
+export async function getFilterFacets(gender?: Gender): Promise<{
   brands: string[];
   sizes: string[];
   categories: CategorySummary[];
 }> {
-  const products = await getProducts();
-  const categories = await getCategories();
+  const [products, allCategories] = await Promise.all([
+    getProducts(gender ? { gender } : {}),
+    getCategories(),
+  ]);
+
+  let categories = allCategories;
+  if (gender === "MEN") {
+    const bySlug = new Map(allCategories.map((c) => [c.slug, c]));
+    categories = MEN_CATEGORY_SLUGS.map((s) => bySlug.get(s)).filter(
+      (c): c is CategorySummary => Boolean(c)
+    );
+  } else if (gender === "WOMEN") {
+    const bySlug = new Map(allCategories.map((c) => [c.slug, c]));
+    categories = WOMEN_CATEGORY_SLUGS.map((s) => bySlug.get(s)).filter(
+      (c): c is CategorySummary => Boolean(c)
+    );
+  }
+
   const brands = Array.from(new Set(products.map((p) => p.brand))).sort();
   const sizes = Array.from(new Set(products.map((p) => p.size)));
   return { brands, sizes, categories };

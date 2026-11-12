@@ -50,17 +50,17 @@ export interface ProductCardItem {
   featured: boolean;
   era: string | null;
   material: string;
+  description: string;
+  measurements: GarmentMeasurements;
   category: CategorySummary;
   images: ProductImageItem[];
   collections: CollectionSummary[];
 }
 
 export interface ProductDetailItem extends ProductCardItem {
-  description: string;
   conditionNotes: string | null;
   color: string | null;
   sku: string;
-  measurements: GarmentMeasurements;
   createdAt: string;
 }
 

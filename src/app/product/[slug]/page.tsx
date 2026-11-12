@@ -7,6 +7,7 @@ import { getProductBySlug, getProducts } from "@/lib/catalog";
 import { trySealProductStockQuery } from "@/lib/realtime";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { ProductCard } from "@/components/product/ProductCard";
+import { RecentlyViewedSection } from "@/components/product/RecentlyViewedSection";
 import {
   ProductReviewsSection,
   type ReviewItem,
@@ -130,6 +131,8 @@ async function ProductPageContent({
           </div>
         </section>
       )}
+
+      <RecentlyViewedSection currentProduct={product} />
     </div>
   );
 }

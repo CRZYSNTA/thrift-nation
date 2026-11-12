@@ -13,7 +13,12 @@ import {
   verifyRazorpayPaymentSignature,
   verifyRazorpayWebhookSignature,
 } from "../lib/razorpay";
-import { getProducts, getProductBySlug, getCollections } from "../lib/catalog";
+import {
+  getProducts,
+  getProductBySlug,
+  getCollections,
+  getFilterFacets,
+} from "../lib/catalog";
 import { SEED_PRODUCTS } from "../lib/seed-data";
 
 test("formatINR formats Indian Rupees without decimals", () => {
@@ -95,17 +100,25 @@ test("Razorpay webhook signature verification validates raw body HMAC", () => {
   }
 });
 
-test("Seed catalog has unique slugs, unique SKUs, 1-of-1 stock, and existing local images", () => {
+test("Seed catalog has unique slugs, unique SKUs, unique primary images, 1-of-1 stock, and existing local images", () => {
   const slugs = new Set<string>();
   const skus = new Set<string>();
+  const primaryImages = new Set<string>();
 
   for (const prod of SEED_PRODUCTS) {
     assert.ok(!slugs.has(prod.slug), `Duplicate slug: ${prod.slug}`);
     assert.ok(!skus.has(prod.sku), `Duplicate SKU: ${prod.sku}`);
+    assert.ok(
+      !primaryImages.has(prod.images[0].url),
+      `Duplicate primary image: ${prod.images[0].url}`
+    );
     slugs.add(prod.slug);
     skus.add(prod.sku);
+    primaryImages.add(prod.images[0].url);
     assert.ok(prod.stockQuantity >= 1);
     assert.ok(prod.images.length >= 1);
+    assert.ok(prod.description.length > 10);
+    assert.ok(Object.keys(prod.measurements).length > 0);
 
     for (const img of prod.images) {
       const filePath = path.join(process.cwd(), "public", img.url.replace(/^\//, ""));
@@ -149,5 +162,17 @@ test("Catalog queries filter by gender, collection, price, search, and sort corr
 
   const collections = await getCollections();
   assert.equal(collections.length, 5);
+
+  const menFacets = await getFilterFacets("MEN");
+  assert.deepEqual(
+    menFacets.categories.map((c) => c.name),
+    ["Shirts", "T-shirts", "Trousers", "Denim", "Outerwear", "Jackets"]
+  );
+
+  const womenFacets = await getFilterFacets("WOMEN");
+  assert.deepEqual(
+    womenFacets.categories.map((c) => c.name),
+    ["Tops", "Dresses", "Trousers", "Skirts", "Denim", "Outerwear"]
+  );
 });
 

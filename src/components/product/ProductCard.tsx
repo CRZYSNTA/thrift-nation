@@ -58,11 +58,11 @@ export function ProductCard({ product }: ProductCardProps) {
             <span className="bg-charcoal px-2 py-0.5 text-[10px] font-medium tracking-[0.14em] uppercase text-ivory">
               Sold Out
             </span>
-          ) : product.stockQuantity === 1 ? (
+          ) : (
             <span className="bg-olive/90 px-2 py-0.5 text-[10px] font-medium tracking-[0.14em] uppercase text-white">
-              1 of 1
+              {product.stockQuantity === 1 ? "1 of 1 · Available" : "Available"}
             </span>
-          ) : null}
+          )}
         </div>
 
         {/* Top Right: Wishlist */}
@@ -104,7 +104,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
           <Link
             href={`/product/${product.slug}`}
-            className="mt-1 block text-sm font-normal leading-snug text-charcoal hover:text-olive transition-colors line-clamp-2"
+            className="mt-1 block min-h-[2.5rem] text-sm font-normal leading-snug text-charcoal hover:text-olive transition-colors line-clamp-2"
           >
             {product.name}
           </Link>

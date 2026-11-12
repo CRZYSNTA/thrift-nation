@@ -12,7 +12,6 @@ import {
   ShoppingBag,
   User,
   X,
-  ShieldCheck,
 } from "lucide-react";
 import { useStore } from "@/components/providers/StoreProvider";
 import { cn } from "@/lib/utils";
@@ -29,9 +28,6 @@ export function Navbar() {
   const { data: session } = useSession();
   const { cartCount, wishlistIds, openCart, openSearch } = useStore();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const isAdmin =
-    session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
 
   return (
     <header className="sticky top-0 z-40 border-b border-charcoal/10 bg-ivory/95 backdrop-blur-md">
@@ -83,16 +79,6 @@ export function Navbar() {
 
         {/* Right: Utility Icons */}
         <div className="flex items-center justify-end gap-3 sm:gap-5 lg:flex-1">
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="hidden sm:inline-flex items-center gap-1.5 border border-charcoal/20 px-2.5 py-1 text-[10px] font-medium tracking-[0.16em] uppercase text-charcoal hover:bg-charcoal hover:text-ivory transition-colors"
-            >
-              <ShieldCheck className="h-3 w-3" />
-              Admin
-            </Link>
-          )}
-
           <button
             type="button"
             onClick={openSearch}
@@ -198,15 +184,6 @@ export function Navbar() {
                   >
                     Wishlist ({wishlistIds.length})
                   </Link>
-                  {isAdmin && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileOpen(false)}
-                      className="text-xs font-medium tracking-[0.16em] uppercase text-olive"
-                    >
-                      Admin Dashboard
-                    </Link>
-                  )}
                 </div>
               </div>
 

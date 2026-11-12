@@ -177,6 +177,43 @@ export function QuickViewModal() {
                   </span>
                 </div>
               </div>
+
+              {quickViewProduct.description && (
+                <p className="text-xs leading-relaxed text-charcoal/75 line-clamp-3">
+                  {quickViewProduct.description}
+                </p>
+              )}
+
+              {(() => {
+                const m = quickViewProduct.measurements ?? {};
+                const entries = [
+                  { label: "Chest", value: m.chest },
+                  { label: "Waist", value: m.waist },
+                  { label: "Hip", value: m.hip },
+                  { label: "Shoulder", value: m.shoulder },
+                  { label: "Sleeve", value: m.sleeve },
+                  { label: "Length", value: m.length },
+                  { label: "Inseam", value: m.inseam },
+                ].filter((e) => Boolean(e.value));
+                if (entries.length === 0) return null;
+                return (
+                  <div className="border border-charcoal/10 bg-sand/25 p-3.5">
+                    <p className="text-[10px] font-medium tracking-[0.16em] uppercase text-charcoal/65">
+                      Garment Measurements
+                    </p>
+                    <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px]">
+                      {entries.map((item) => (
+                        <div key={item.label} className="flex justify-between gap-2">
+                          <dt className="text-charcoal/55">{item.label}</dt>
+                          <dd className="font-medium tabular-nums text-charcoal">
+                            {item.value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="mt-8 space-y-3">

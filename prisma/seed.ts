@@ -127,14 +127,18 @@ async function main() {
     collectionIdBySlug.set(col.slug, upserted.id);
   }
 
-  // 5. Seed Products
+  // 5. Seed / Sync Products by SKU
   for (const prod of SEED_PRODUCTS) {
     const categoryId = categoryIdBySlug.get(prod.categorySlug);
     if (!categoryId) continue;
 
     const existing = await prisma.product.findUnique({
-      where: { slug: prod.slug },
+      where: { sku: prod.sku },
     });
+
+    const collectionIds = prod.collectionSlugs
+      .map((s) => collectionIdBySlug.get(s))
+      .filter((id): id is string => Boolean(id));
 
     if (!existing) {
       await prisma.product.create({
@@ -167,15 +171,57 @@ async function main() {
             })),
           },
           collections: {
-            create: prod.collectionSlugs
-              .map((s) => collectionIdBySlug.get(s))
-              .filter((id): id is string => Boolean(id))
-              .map((collectionId) => ({ collectionId })),
+            create: collectionIds.map((collectionId) => ({ collectionId })),
           },
         },
       });
+    } else {
+      await prisma.$transaction(async (tx) => {
+        await tx.productImage.deleteMany({ where: { productId: existing.id } });
+        await tx.productCollection.deleteMany({ where: { productId: existing.id } });
+        await tx.product.update({
+          where: { id: existing.id },
+          data: {
+            name: prod.name,
+            slug: prod.slug,
+            brand: prod.brand,
+            categoryId,
+            gender: prod.gender,
+            price: prod.price,
+            originalPrice: prod.originalPrice,
+            originalPriceVerified: prod.originalPriceVerified,
+            size: prod.size,
+            measurements: prod.measurements as unknown as Prisma.InputJsonValue,
+            condition: prod.condition,
+            conditionNotes: prod.conditionNotes,
+            material: prod.material,
+            era: prod.era,
+            color: prod.color,
+            featured: prod.featured,
+            description: prod.description,
+            images: {
+              create: prod.images.map((img, idx) => ({
+                url: img.url,
+                alt: img.alt,
+                sortOrder: idx,
+              })),
+            },
+            collections: {
+              create: collectionIds.map((collectionId) => ({ collectionId })),
+            },
+          },
+        });
+      });
     }
   }
+
+  // Clean up old unused categories if empty
+  await prisma.category.deleteMany({
+    where: {
+      slug: { in: ["tailoring", "bottoms", "archive-jackets"] },
+      products: { none: {} },
+    },
+  });
 
   // 6. Seed Coupons
   await prisma.coupon.upsert({
